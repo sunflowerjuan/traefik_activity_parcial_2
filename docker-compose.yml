@@ -1,0 +1,117 @@
+volumes:
+  neon-neo4j_data:
+
+networks:
+  app_network:
+    driver: bridge
+
+services:
+  traefik:
+    image: traefik:v3.5
+    container_name: traefik
+    restart: always
+    command:
+      - "--api.dashboard=true"
+      - "--api.insecure=false"
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+    labels:
+      # Router para dashboard
+      - "traefik.http.routers.traefik.rule=Host(`charizard.localhost`)"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.entrypoints=web"
+
+      #Autenticacion
+      # Declaring the user list
+      #
+      # Note: when used in docker-compose.yml all dollar signs in the hash need to be doubled for escaping.
+      # To create user:password pair, it's possible to use this command:
+      # echo $(htpasswd -nB juan) | sed -e s/\\$/\\$\\$/g
+      #
+      # Also, note that dollar signs should NOT be doubled when not evaluated (e.g. Ansible docker_container module).
+
+      - "traefik.http.middlewares.test-auth.basicauth.users=juan:$$2y$$05$$926ZiFDXdWK7CQMVygyyNOJyDwlWnTxef94l6DDEnY2zlmLUoqnLW,sunflowers:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
+
+      # Applying the middleware to the router
+      - "traefik.http.routers.traefik.middlewares=test-auth"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - app_network
+
+  neon-neo4j:
+    image: neo4j:latest
+    container_name: neo4j_db-18
+    restart: always
+    environment:
+      - NEO4J_AUTH=${NEO4J_USERNAME}/${NEO4J_PASSWORD}
+    volumes:
+      - neon-neo4j_data:/data
+      - ./AllMoviesDetails_w.csv:/var/lib/neo4j/import/AllMoviesDetails_w.csv
+    networks:
+      - app_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.neon-neo4j.loadbalancer.server.port=7474"
+      # Router para http://snorlax.localhost/
+      - "traefik.http.routers.neon-neo4j.rule=Host(`snorlax.localhost`)"
+        # Router para http://mewtwo.localhost/api
+      - "traefik.http.routers.neon-neo4j-db.rule=Host(`snorlax.localhost`) && PathPrefix(`/db`)"
+      #Create strip middleware to remove /v1
+      - "traefik.http.middlewares.strip-db.stripprefix.prefixes=/db"
+      # add middleware to router
+      - "traefik.http.routers.neon-neo4j-db.middlewares=strip-db"
+
+      # Middleware de errores
+      - "traefik.http.middlewares.neon-neo4j-error.errors.status=404,500-599"
+      - "traefik.http.middlewares.neon-neo4j-error.errors.service=error-pages"
+      - "traefik.http.middlewares.neon-neo4j-error.errors.query=/{status}.html"
+
+      # Asociar el middleware al router
+      - "traefik.http.routers.neon-neo4j.middlewares=neon-neo4j-error"
+
+  backend:
+    build: ./backend
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      - neon-neo4j
+    networks:
+      - app_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.backend.loadbalancer.server.port=3000"
+      # Router para http://api.localhost/
+      - "traefik.http.routers.backend.rule=Host(`mewtwo.localhost`)"
+        # Router para http://mewtwo.localhost/api
+      - "traefik.http.routers.backend-v1.rule=Host(`mewtwo.localhost`) && PathPrefix(`/api`)"
+      #Create strip middleware to remove /v1
+      - "traefik.http.middlewares.strip-v1.stripprefix.prefixes=/api"
+      # add middleware to router
+      - "traefik.http.routers.backend-v1.middlewares=strip-v1"
+      # Middleware rateLimit
+      - "traefik.http.middlewares.backend-ratelimit.rateLimit.average=10"
+      - "traefik.http.middlewares.backend-ratelimit.rateLimit.burst=3"
+
+      # Middleware de errores
+      - "traefik.http.middlewares.backend-error.errors.status=404,500-599"
+      - "traefik.http.middlewares.backend-error.errors.service=error-pages"
+      - "traefik.http.middlewares.backend-error.errors.query=/{status}.html"
+
+      # Asociar el middleware al router
+      - "traefik.http.routers.backend.middlewares=backend-ratelimit,backend-error"
+  error-pages:
+    image: nginx:alpine
+    container_name: error-pages
+    restart: always
+    volumes:
+      - ./error-pages:/usr/share/nginx/html:ro
+    networks:
+      - app_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.error-pages.loadbalancer.server.port=80"
