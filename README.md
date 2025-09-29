@@ -11,8 +11,9 @@ Entregables:
 ![c](cha.png)
 
 ![c](mewtwo.png)
+![c](sno.png)
 
-- Diagrama simple (papel/foto) que muestre qué servicio corresponde a cada
-  Pokémon.
-- Evidencias: curl o navegador mostrando acceso a API y Neo4j con esos
-  nombres.
+- Diagrama simple (papel/foto) que muestre qué servicio corresponde a cada Pokémon.
+  ![c](diagram.png)
+
+## PUNTO 2
