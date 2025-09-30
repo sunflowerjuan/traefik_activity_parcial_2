@@ -8,12 +8,20 @@ Entregables:
 
 - charizard.localhost para traefik
 
-![c](cha.png)
+![c](img/cha.png)
 
-![c](mewtwo.png)
-![c](sno.png)
+![c](img/mewtwo.png)
+![c](img/sno.png)
 
 - Diagrama simple (papel/foto) que muestre qué servicio corresponde a cada Pokémon.
-  ![c](diagram.png)
+  ![c](img/diagram.png)
 
 ## PUNTO 2
+
+capturas mostrando balanceo en comerciales
+
+![c](img/balance-1.png)
+
+logs en legendarios.
+
+![c](img/legendario.png)

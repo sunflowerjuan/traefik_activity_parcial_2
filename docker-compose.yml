@@ -15,6 +15,7 @@ services:
       - "--api.insecure=false"
       - "--providers.docker=true"
       - "--entrypoints.web.address=:80"
+      - "--accesslog=true"
     labels:
       # Router para dashboard
       - "traefik.http.routers.traefik.rule=Host(`charizard.localhost`)"
@@ -82,6 +83,8 @@ services:
       - neon-neo4j
     networks:
       - app_network
+    deploy:
+      replicas: 2
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.backend.loadbalancer.server.port=3000"
@@ -104,6 +107,51 @@ services:
 
       # Asociar el middleware al router
       - "traefik.http.routers.backend.middlewares=backend-ratelimit,backend-error"
+  backend-legendario:
+    build: ./backend
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      - neon-neo4j
+    networks:
+      - app_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.backend.loadbalancer.server.port=3001"
+      # Router para http://api.localhost/
+      - "traefik.http.routers.backend.rule=Host(`mewtwo.localhost`)"
+        # Router para http://mewtwo.localhost/api
+      - "traefik.http.routers.backend-v1.rule=Host(`mewtwo.localhost`) && PathPrefix(`/legendario`)"
+      #Create strip middleware to remove /v1
+      - "traefik.http.middlewares.strip-v1.stripprefix.prefixes=/legendario"
+      # add middleware to router
+      - "traefik.http.routers.backend-v1.middlewares=strip-v1"
+      # Middleware rateLimit
+      - "traefik.http.middlewares.backend-ratelimit.rateLimit.average=10"
+      - "traefik.http.middlewares.backend-ratelimit.rateLimit.burst=3"
+
+      # Middleware de errores
+      - "traefik.http.middlewares.backend-error.errors.status=404,500-599"
+      - "traefik.http.middlewares.backend-error.errors.service=error-pages"
+      - "traefik.http.middlewares.backend-error.errors.query=/{status}.html"
+
+      # Asociar el middleware al router
+      - "traefik.http.routers.backend.middlewares=backend-ratelimit,backend-error"
+
+      # Define un router que usará el middleware de log
+      - "traefik.http.routers.mi-router.rule=Host(`ejemplo.com`)"
+      - "traefik.http.routers.mi-router.middlewares=mi-log-middleware@docker"
+
+        # Define el middleware de log (usando un middleware de archivo para log)
+        # Este es un ejemplo para un middleware de tipo "filelogger" (si estuviera disponible o un ejemplo genérico)
+        # En este ejemplo, asumimos que el middleware se maneja con un archivo de configuración
+        # La forma más común de usar logging es a través de la configuración dinámica de Traefik,
+        # y solo se accede a ella por labels cuando se usa el Provider "file" o "docker" [3].
+        # Para un ejemplo más directo con labels, podemos usar un middleware genérico o un tipo de logging que sea configurable por label, si el middleware log estuviera expuesto.
+        # Sin embargo, el registro de acceso suele configurarse globalmente o en el provider dinámico [9, 10].
+        # Si el middleware "log" tuviera un tipo específico que se pueda configurar por label, la sintaxis sería así:
+        # - "traefik.http.middlewares.mi-log-middleware.logger.type=log" # Esto es un ejemplo teórico
   error-pages:
     image: nginx:alpine
     container_name: error-pages
