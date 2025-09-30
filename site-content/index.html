@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>200 - OK</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #fef2f2;
+            color: #1e293b;
+            text-align: center;
+            padding: 50px;
+        }
+
+        h1 {
+            font-size: 5em;
+            color: #dc2626;
+        }
+
+        p {
+            font-size: 1.2em;
+            margin: 20px 0;
+        }
+
+        a {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 24px;
+            background: #10b981;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: 0.3s;
+        }
+
+        a:hover {
+            background: #059669;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>BIENVENIDO A LA SALA DE PRENSA</h1>
+    <p>hora actual del servidor:.</p>
+    <p id="display-time">
+        <script>
+            function myFunc() {
+                var now = new Date();
+                var time = now.getHours() + ":" + now.getMinutes() + ":" + now.getSeconds();
+                document.getElementById('display-time').innerHTML = time;
+            }
+            setInterval(myFunc, 1000);
+        </script>
+    </p>
+</body>
+
+</html>

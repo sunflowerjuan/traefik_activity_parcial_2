@@ -48,3 +48,21 @@ Configuramos un midleware `Basic-Auth` en el servicio de neo4j y uno de `ratelim
 
   - el filtro de la API está activo.
     ![c](img/3-limit.png)
+
+## PUNTO 4
+
+Servicio interno restringido (ej. Neo4j admin) sin exposición pública pero
+accesible desde la red interna.
+
+intentamos acceder a neo4j desde `http://snorlax.localhost/`
+![c](img/neo4j-no.png)
+
+Servicio público adicional (ej. Nginx) con un mensaje de bienvenida.
+
+Llamamos a `http://hello.localhost/` donde tenemos la siguiente salida:
+
+![c](img/prensa.png)
+
+### REFLEXION
+
+Nuestro aeropuerto pokemon refleja transparencia debido a que llegamos a nuestros vuelos mediante llamados a rutas establecidas sin que el usuario sepa que pasa detras de cortinas, se puede escalar debido a que podemos replicar un mismo servicio para concurrencia como verificar pasaportes, si contratamos mas personas que lo hagan.
