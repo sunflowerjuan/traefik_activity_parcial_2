@@ -3,29 +3,20 @@
 
 rectangle "Host (puerto 80)" {
   component Traefik {
-    [EntryPoint web :80]
+    [EntryPoint web :80 "charizard.localhost"]
   }
 }
 
 rectangle "app_network (bridge)" {
-  [backend-1 :3000]
-  [backend-2 :3000]
-  [Neo4j DB]
+  component backend{
+  [backend :3000 "mewtwo.localhost"]
+  }
+  component database{
+  [Neo4j DB "snorlax.localhost"]
+  }
+  
 }
 
-Traefik --> [backend-1 :3000]
-Traefik --> [backend-2 :3000]
-[backend-1 :3000] --> [Neo4j DB]
-[backend-2 :3000] --> [Neo4j DB]
-
-note right of Traefik
-  Router:
-   - api.localhost
-   - api.localhost/v1
-end note
-
-note bottom of [Neo4j DB]
-  Acceso solo interno
-  (sin puertos publicados)
-end note
+Traefik --> backend 
+backend --> database
 @enduml
