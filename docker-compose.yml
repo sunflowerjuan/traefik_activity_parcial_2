@@ -71,8 +71,11 @@ services:
       - "traefik.http.middlewares.neon-neo4j-error.errors.service=error-pages"
       - "traefik.http.middlewares.neon-neo4j-error.errors.query=/{status}.html"
 
+      #Auth midleware
+      - "traefik.http.middlewares.test-auth.basicauth.users=juan:$$2y$$05$$926ZiFDXdWK7CQMVygyyNOJyDwlWnTxef94l6DDEnY2zlmLUoqnLW,sunflowers:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
+
       # Asociar el middleware al router
-      - "traefik.http.routers.neon-neo4j.middlewares=neon-neo4j-error"
+      - "traefik.http.routers.neon-neo4j.middlewares=neon-neo4j-error,test-auth"
 
   backend:
     build: ./backend
